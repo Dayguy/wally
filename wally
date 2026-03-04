@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+# Only enable these shell behaviours if we're not being sourced
+# Approach via: https://stackoverflow.com/a/28776166/8787985
+if ! (return 0 2>/dev/null); then
+  set -o errexit  # Exit on most errors (see the manual)
+  set -o nounset  # Disallow expansion of unset variables
+  set -o pipefail # Use last non-zero exit code in a pipeline
+fi
+
+function get_wallpaper_choice() {
+  local -r wallpaper_directory="${1}"
+  local -r rofi_theme_file="${2}"
+  local -a wallpapers
+  local wallpaper
+
+  pushd "${wallpaper_directory}" >/dev/null || exit
+  # TODO: Check for image files, *.jpg, *.png, etc
+  mapfile -t wallpapers < <(find ~+ -not -path "${wallpaper_directory}" -type f)
+  popd >/dev/null || exit
+
+  if [[ "${#wallpapers[@]}" -eq 0 ]]; then
+    return 1
+  fi
+
+  for wallpaper in "${wallpapers[@]}"; do
+    echo -en "${wallpaper}\0icon\x1f${wallpaper}\n" # thumbnails
+  done | rofi -dmenu -show file-browser-extended -theme "${rofi_theme_file}"
+
+  return 0
+}
+
+function set_lockscreen() {
+  local target_wallpaper="${1}"
+  local hyprlock_config="${2}"
+
+  if [[ -f "${hyprlock_config}" ]]; then
+    # Writes the new wallpaper to the lock screen configuration file
+    sed -i "s|^\(\s*path\s*=\s*\).*|\1${target_wallpaper}|" "${hyprlock_config}"
+    pkill hyprlock && hyprlock &
+  fi
+}
+
+function main() {
+  # TODO: Parametize or environment variables for next 3 variables.
+  local -r wallpaper_dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Wallpapers"
+  local -r hyprlock_config="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/hyprlock.conf"
+  local -r rofi_theme_file="${XDG_CONFIG_HOME:-$HOME/.config}/wally/wally.rasi"
+  local selection
+
+  if [[ -d "${wallpaper_dir}" ]]; then
+    selection=$(get_wallpaper_choice "${wallpaper_dir}" "${rofi_theme_file}")
+  fi
+
+  if [[ -f "${selection}" ]]; then
+    awww img "${selection}" --transition-type center
+    set_lockscreen "${selection}" "${hyprlock_config}"
+  fi
+}
+
+main "$@"
