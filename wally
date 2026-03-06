@@ -1,13 +1,5 @@
 #!/usr/bin/env bash
 
-# Only enable these shell behaviours if we're not being sourced
-# Approach via: https://stackoverflow.com/a/28776166/8787985
-if ! (return 0 2>/dev/null); then
-  set -o errexit  # Exit on most errors (see the manual)
-  set -o nounset  # Disallow expansion of unset variables
-  set -o pipefail # Use last non-zero exit code in a pipeline
-fi
-
 function get_wallpaper_choice() {
   local -r wallpaper_directory="${1}"
   local -r rofi_theme_file="${2}"
@@ -57,5 +49,13 @@ function main() {
     set_lockscreen "${selection}" "${hyprlock_config}"
   fi
 }
+
+# Only enable these shell behaviours if we're not being sourced
+# Approach via: https://stackoverflow.com/a/28776166/8787985
+if ! (return 0 2>/dev/null); then
+  set -o errexit  # Exit on most errors (see the manual)
+  set -o nounset  # Disallow expansion of unset variables
+  set -o pipefail # Use last non-zero exit code in a pipeline
+fi
 
 main "$@"
