@@ -4,19 +4,19 @@ function get_wallpaper_choice() {
   local -r wallpaper_directory="${1}"
   local -r rofi_theme_file="${2}"
   local -a wallpapers
-  local wallpaper find_cmd
+  local wallpaper
 
   pushd "${wallpaper_directory}" >/dev/null || exit
 
-  # TODO: Check for image files, *.jpg, *.png, etc
-  #       Put extensions in a configuration file to fascilitate any future edits
-  #       Remove mapfile since it's not Mac compatible
-
+  # Older bash systems won't have mapfile. Switch to while .. do just in case
   # mapfile -t wallpapers < <(find ~+ -not -path "${wallpaper_directory}" -type f)
 
+  # Omitted one extension because there was a dependancy and I didn't think I'd ever need it.
+  # For a list of the extensions supported see here: https://codeberg.org/LGFae/awww
   while IFS= read -r line; do
     wallpapers+=("${line}")
-  done < <(find "${wallpaper_directory}" -type f -name "*.jpg" \
+  done < <(find "${wallpaper_directory}" -type f \
+    -name "*.jpg" \
     -o -name "*.jpeg" \
     -o -name "*.jpegxl" \
     -o -name "*.webp" \
@@ -26,7 +26,7 @@ function get_wallpaper_choice() {
     -o -name "*.svg" \
     -o -name "*.pnm" \
     -o -name "*.tga" \
-    -o -name "*.farbfeld")
+    -o -name "*.farbfeld" | sort)
 
   popd >/dev/null || exit
 
@@ -38,6 +38,13 @@ function get_wallpaper_choice() {
     echo -en "${wallpaper}\0icon\x1f${wallpaper}\n" # thumbnails
   done | rofi -dmenu -show file-browser-extended -theme "${rofi_theme_file}"
 
+  return 0
+}
+
+function is_hypr_ecosystem() {
+  if [[ ! $(pidof hypridle) && $(grep "hyprlock" "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/hypridle.conf") ]]; then
+    return 1
+  fi
   return 0
 }
 
@@ -69,7 +76,7 @@ function main() {
   fi
   awww img "${selection}" --transition-type center
 
-  if [[ -f "${hyprlock_config}" ]]; then
+  if is_hypr_ecosystem; then
     set_hyprlock "${selection}" "${hyprlock_config}"
   fi
 }
