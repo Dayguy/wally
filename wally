@@ -4,11 +4,30 @@ function get_wallpaper_choice() {
   local -r wallpaper_directory="${1}"
   local -r rofi_theme_file="${2}"
   local -a wallpapers
-  local wallpaper
+  local wallpaper find_cmd
 
   pushd "${wallpaper_directory}" >/dev/null || exit
+
   # TODO: Check for image files, *.jpg, *.png, etc
-  mapfile -t wallpapers < <(find ~+ -not -path "${wallpaper_directory}" -type f)
+  #       Put extensions in a configuration file to fascilitate any future edits
+  #       Remove mapfile since it's not Mac compatible
+
+  # mapfile -t wallpapers < <(find ~+ -not -path "${wallpaper_directory}" -type f)
+
+  while IFS= read -r line; do
+    wallpapers+=("${line}")
+  done < <(find "${wallpaper_directory}" -type f -name "*.jpg" \
+    -o -name "*.jpeg" \
+    -o -name "*.jpegxl" \
+    -o -name "*.webp" \
+    -o -name "*.gif" \
+    -o -name "*.png" \
+    -o -name "*.tiff" \
+    -o -name "*.svg" \
+    -o -name "*.pnm" \
+    -o -name "*.tga" \
+    -o -name "*.farbfeld")
+
   popd >/dev/null || exit
 
   if [[ "${#wallpapers[@]}" -eq 0 ]]; then
@@ -22,7 +41,7 @@ function get_wallpaper_choice() {
   return 0
 }
 
-function set_lockscreen() {
+function set_hyprlock() {
   local target_wallpaper="${1}"
   local hyprlock_config="${2}"
 
@@ -40,13 +59,18 @@ function main() {
   local -r rofi_theme_file="${XDG_CONFIG_HOME:-$HOME/.config}/wally/wally.rasi"
   local selection
 
-  if [[ -d "${wallpaper_dir}" ]]; then
-    selection=$(get_wallpaper_choice "${wallpaper_dir}" "${rofi_theme_file}")
+  if [[ ! -d "${wallpaper_dir}" ]]; then
+    return
   fi
+  selection=$(get_wallpaper_choice "${wallpaper_dir}" "${rofi_theme_file}")
 
-  if [[ -f "${selection}" ]]; then
-    awww img "${selection}" --transition-type center
-    set_lockscreen "${selection}" "${hyprlock_config}"
+  if [[ ! -f "${selection}" ]]; then
+    return
+  fi
+  awww img "${selection}" --transition-type center
+
+  if [[ -f "${hyprlock_config}" ]]; then
+    set_hyprlock "${selection}" "${hyprlock_config}"
   fi
 }
 
