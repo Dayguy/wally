@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
 function get_wallpaper_choice() {
-  local -r wallpaper_directory="${1}"
-  local -r rofi_theme_file="${2}"
+  local -r rofi_theme_file="${XDG_CONFIG_HOME:-$HOME/.config}/wally/wally.rasi"
   local -a wallpapers
   local wallpaper
 
-  pushd "${wallpaper_directory}" >/dev/null || exit
+  pushd "${WALLPAPER_HOME}" >/dev/null || exit
 
   # Older bash systems won't have mapfile. Switch to while .. do just in case
   # mapfile -t wallpapers < <(find ~+ -not -path "${wallpaper_directory}" -type f)
@@ -15,7 +14,7 @@ function get_wallpaper_choice() {
   # For a list of the extensions supported see here: https://codeberg.org/LGFae/awww
   while IFS= read -r line; do
     wallpapers+=("${line}")
-  done < <(find "${wallpaper_directory}" -type f \
+  done < <(find "${WALLPAPER_HOME}" -type f \
     -name "*.jpg" \
     -o -name "*.jpeg" \
     -o -name "*.jpegxl" \
@@ -47,22 +46,19 @@ function set_hyprlock() {
 
   # This detemines whether hypridle is running and if it's set to call hyprlock
   if pidof hypridle && grep -q 'lock_cmd.*hyprlock' "${hypr_config_dir}/hypridle.conf"; then
-    # Writes the new wallpaper to the lock screen configuration file
+    # This writes the new wallpaper to the lock screen configuration file
     sed -i "s|^\(\s*path\s*=\s*\).*|\1${target_wallpaper}|" "${hypr_config_dir}/hyprlock.conf"
     pkill hyprlock && hyprlock &
   fi
 }
 
 function main() {
-  # TODO: Parametize or environment variables for next 3 variables.
-  local -r wallpaper_dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Wallpapers"
-  local -r rofi_theme_file="${XDG_CONFIG_HOME:-$HOME/.config}/wally/wally.rasi"
   local selection
 
-  if [[ ! -d "${wallpaper_dir}" ]]; then
+  if [[ ! -d "${WALLPAPER_HOME}" ]]; then
     return
   fi
-  selection=$(get_wallpaper_choice "${wallpaper_dir}" "${rofi_theme_file}")
+  selection=$(get_wallpaper_choice)
 
   if [[ ! -f "${selection}" ]]; then
     return
