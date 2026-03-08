@@ -41,20 +41,14 @@ function get_wallpaper_choice() {
   return 0
 }
 
-function is_hypr_ecosystem() {
-  if [[ ! $(pidof hypridle) && $(grep "hyprlock" "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/hypridle.conf") ]]; then
-    return 1
-  fi
-  return 0
-}
-
 function set_hyprlock() {
   local target_wallpaper="${1}"
-  local hyprlock_config="${2}"
+  local -r hypr_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
 
-  if [[ -f "${hyprlock_config}" ]]; then
+  # This detemines whether hypridle is running and if it's set to call hyprlock
+  if pidof hypridle && grep -q 'lock_cmd.*hyprlock' "${hypr_config_dir}/hypridle.conf"; then
     # Writes the new wallpaper to the lock screen configuration file
-    sed -i "s|^\(\s*path\s*=\s*\).*|\1${target_wallpaper}|" "${hyprlock_config}"
+    sed -i "s|^\(\s*path\s*=\s*\).*|\1${target_wallpaper}|" "${hypr_config_dir}/hyprlock.conf"
     pkill hyprlock && hyprlock &
   fi
 }
@@ -62,7 +56,6 @@ function set_hyprlock() {
 function main() {
   # TODO: Parametize or environment variables for next 3 variables.
   local -r wallpaper_dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Wallpapers"
-  local -r hyprlock_config="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/hyprlock.conf"
   local -r rofi_theme_file="${XDG_CONFIG_HOME:-$HOME/.config}/wally/wally.rasi"
   local selection
 
@@ -76,9 +69,7 @@ function main() {
   fi
   awww img "${selection}" --transition-type center
 
-  if is_hypr_ecosystem; then
-    set_hyprlock "${selection}" "${hyprlock_config}"
-  fi
+  set_hyprlock "${selection}"
 }
 
 # Only enable these shell behaviours if we're not being sourced
