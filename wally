@@ -63,7 +63,7 @@ function main() {
   if [[ ! -f "${selection}" ]]; then
     return
   fi
-  awww img "${selection}" --transition-type center
+  awww img "${selection}" --transition-type any
 
   set_hyprlock "${selection}"
 }
