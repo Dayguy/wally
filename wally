@@ -14,7 +14,7 @@ function get_wallpaper_choice() {
   # For a list of the extensions supported see here: https://codeberg.org/LGFae/awww
   while IFS= read -r line; do
     wallpapers+=("${line}")
-  done < <(find "${WALLPAPER_HOME}" -type f \
+  done < <(find "${WALLPAPER_HOME}" -type f -printf '%h:%f|%p\n' \
     -name "*.jpg" \
     -o -name "*.jpeg" \
     -o -name "*.jpegxl" \
@@ -25,7 +25,7 @@ function get_wallpaper_choice() {
     -o -name "*.svg" \
     -o -name "*.pnm" \
     -o -name "*.tga" \
-    -o -name "*.farbfeld" | sort)
+    -o -name "*.farbfeld" | sort -t: -k1,1 -k2,2 | cut -d "|" -f 2)
 
   popd >/dev/null || exit
 
@@ -35,7 +35,7 @@ function get_wallpaper_choice() {
 
   for wallpaper in "${wallpapers[@]}"; do
     echo -en "${wallpaper}\0icon\x1f${wallpaper}\n" # thumbnails
-  done | rofi -dmenu -show file-browser-extended -theme "${rofi_theme_file}"
+  done | rofi -dmenu -show filebrowser -theme "${rofi_theme_file}"
 
   return 0
 }
@@ -45,7 +45,7 @@ function set_hyprlock() {
   local -r hypr_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
 
   # This detemines whether hypridle is running and if it's set to call hyprlock
-  if pidof hypridle && grep -q 'lock_cmd.*hyprlock' "${hypr_config_dir}/hypridle.conf"; then
+  if pidof hypridle >/dev/null && grep -q 'lock_cmd.*hyprlock' "${hypr_config_dir}/hypridle.conf"; then
     # This writes the new wallpaper to the lock screen configuration file
     sed -i "s|^\(\s*path\s*=\s*\).*|\1${target_wallpaper}|" "${hypr_config_dir}/hyprlock.conf"
     pkill hyprlock && hyprlock &
