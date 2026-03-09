@@ -1,7 +1,7 @@
 # wally
 Wayland wallpaper picker built with bash, rofi & awww.
 
-![Screenshot](screenshot.png)
+<img width="1920" height="1080" alt="wally_screenshot" src="https://github.com/user-attachments/assets/2efd1c5e-06fb-4733-a060-96fa8c949647" />
 
 ### Setup
 1. Create an environment variable that points to the local wallpaper directory. Be sure to adjust the path as necessary to reflect your local system.
