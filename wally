@@ -33,8 +33,9 @@ function get_wallpaper_choice() {
     return 1
   fi
 
+  # Load rofi with thumbnails of the wallpapers
   for wallpaper in "${wallpapers[@]}"; do
-    echo -en "${wallpaper}\0icon\x1f${wallpaper}\n" # thumbnails
+    echo -en "${wallpaper}\0icon\x1f${wallpaper}\n"
   done | rofi -dmenu -show filebrowser -theme "${rofi_theme_file}"
 
   return 0
