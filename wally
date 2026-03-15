@@ -56,6 +56,8 @@ function set_hyprlock() {
 function main() {
   local selection
 
+  hyprctl keyword animations:enabled false >/dev/null
+
   if [[ ! -d "${WALLPAPER_HOME}" ]]; then
     return
   fi
@@ -66,7 +68,14 @@ function main() {
   fi
   awww img "${selection}" --transition-type any
 
+  matugen image "${selection}" --source-color-index 0 >/dev/null
   set_hyprlock "${selection}"
+
+  hyprctl reload >/dev/null
+  sleep 0.1
+
+  hyprctl keyword animations:enabled true >/dev/null
+
 }
 
 # Only enable these shell behaviours if we're not being sourced
